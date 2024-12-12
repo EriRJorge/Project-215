@@ -29,17 +29,14 @@
 #imports
 from PySide6.QtWidgets import (QApplication, QMainWindow, QPushButton, QTreeWidget, QTreeWidgetItem,
                               QLineEdit, QVBoxLayout, QWidget, QHBoxLayout, QLabel, 
-<<<<<<< HEAD
-                              QSplitter, QTextEdit, QFrame, QDialog, QInputDialog, QMessageBox)
-=======
                               QSplitter, QTextEdit, QFrame, QColorDialog, QFontDialog, QMessageBox, QFileDialog, QComboBox,
                               QListWidget, QListWidgetItem, QMenu, QInputDialog)
->>>>>>> f69f78f6b12a7e51d133bfd8a85e0bae8ea08a84
 from PySide6.QtCore import Qt, QDateTime
 from PySide6.QtGui import QFont, QColor
 import sys
 import os
 import json
+import shutil
 
 class SearchBar(QLineEdit):
     def __init__(self):
@@ -193,6 +190,7 @@ class NotesApp(QMainWindow):
         self.setGeometry(100, 100, 1200, 800)
         self.setup_ui()
 
+
     def setup_ui(self):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -240,6 +238,9 @@ class NotesApp(QMainWindow):
         load_action = QPushButton("Load")
         load_action.clicked.connect(self.load_note)
         toolbar.addWidget(load_action)
+
+        #delete note
+        del_folder_action = QPushButton()
 
         # Add folder
         add_folder_action = QPushButton(" + Folder")
@@ -292,7 +293,48 @@ class NotesApp(QMainWindow):
         self.folder_tree.create_folder()
 
     def delete_folder(self):
+        folder_to_del = self.folder_tree.currentItem()
+        prompt = QMessageBox.question(self, "Delete Folder", f"Are you sure you want to delete the folder'{folder_to_del.text(0)} '?", QMessageBox.Yes | QMessageBox.No)
+
+        if prompt == QMessageBox.Yes:
+            folder_del_name = folder_to_del.text(0)
+            folder_del_path = os.path.join("notes", folder_del_name)
+
+            shutil.rmtree(folder_del_path)
+
+            parent = folder_to_del.parent()
+            if parent:
+                parent.removeChild(folder_to_del)
+
+            QMessageBox.information(self, "Delete Folder", "Folder Deleted")
+        else:
+            QMessageBox.information(self, "Delete Folder", "Folder not Deleted")
+        
         self.folder_tree.delete_folder()
+
+    def delete_note(self):
+        note_to_del = self.currentItem()
+        if not note_to_del:
+            return
+    
+        note_title = note_to_del.text()
+
+        reply = QMessageBox.question(self, "Delete Note", f"Are you sure you want to delete the note '{note_title}'?", QMessageBox.Yes | QMessageBox.No)
+    
+        if reply == QMessageBox.Yes:
+            current_folder = self.parent().folder_tree.currentItem().text(0) if self.parent().folder_tree.currentItem() else "Default"
+
+            file_path = os.path.join("notes", current_folder, f"{note_title}.txt")
+        
+            try:
+
+                os.remove(file_path)
+
+                self.takeItem(self.row(note_to_del))
+            
+                QMessageBox.information(self, "Delete Note", "Note deleted successfully.")
+            except Exception as e:
+                QMessageBox.warning(self, "Delete Note", f"Failed to delete note: {str(e)}")
 
     def folder_selected(self, item, column):
         folder_name = item.text(0)
