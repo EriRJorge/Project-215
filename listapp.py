@@ -13,7 +13,7 @@
 2. Load a .txt file
 3. Has some resemblance to the wireframe
 4. Is a .exe executable
-5. User can type notes
+5. User can type notes 
 6. User can format
 7. User can delete notes"""
 
@@ -21,7 +21,7 @@
 #imports
 from PySide6.QtWidgets import (QApplication, QMainWindow, QPushButton, QTreeWidget, QTreeWidgetItem,
                               QLineEdit, QVBoxLayout, QWidget, QHBoxLayout, QLabel, 
-                              QSplitter, QTextEdit, QFrame)
+                              QSplitter, QTextEdit, QFrame, QDialog, QInputDialog, QMessageBox)
 from PySide6.QtCore import Qt, QDateTime
 from PySide6.QtGui import QFont, QPainter, QColor, QPen, QIcon
 import sys
