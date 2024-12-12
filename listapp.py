@@ -4,6 +4,7 @@
 #12/02/2024 - created class CustomListWidget
 #12/02/2024 - created class ListNotesApp
 #12/03/2024 - added the add_item method
+#12/04/2024 - Added TODOs
 
 
 
@@ -18,115 +19,47 @@
 
 
 #imports
-from PySide6.QtWidgets import (QApplication, QMainWindow, QPushButton, 
-                              QListWidget, QLineEdit, QVBoxLayout, 
-                              QWidget, QHBoxLayout, QMessageBox, QListWidgetItem)
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QMouseEvent
-import json
+from PySide6.QtWidgets import (QApplication, QMainWindow, QPushButton, QTreeWidget, QTreeWidgetItem,
+                              QLineEdit, QVBoxLayout, QWidget, QHBoxLayout, QLabel, 
+                              QSplitter, QTextEdit, QFrame)
+from PySide6.QtCore import Qt, QDateTime
+from PySide6.QtGui import QFont, QPainter, QColor, QPen, QIcon
+import sys
 import os
+import json
 
-
-class CustomListWidget(QListWidget):
+class SearchBar(QLineEdit):
     def __init__(self):
         super().__init__()
-        self.setSelectionMode(QListWidget.SelectionMode.MultiSelection)
-        self.last_clicked_item = None
+        self.setPlaceholderText("Something")
+        self.setStyleSheet("""
+            QLineEdit {
+                background-color: #F9F1DC;
+                border: 1px solid #CCCCCC;
+                border-radius: 5px;
+                padding: 5px;
+                margin: 10px;
+                color: #333333;
+            }
+        """)
 
-    def mousePressEvent(self, event: QMouseEvent):
-        item = self.itemAt(event.pos())
-        if item and event.modifiers() == Qt.ShiftModifier:
-            # Toggle the selection state of the clicked item
-            item.setSelected(not item.isSelected())
-            self.last_clicked_item = item
-        else:
-            # Default handling for other cases
-            super().mousePressEvent(event)
-            if item:
-                self.last_clicked_item = item
-
-class NotesApp(QMainWindow): #TODO: change to FilesApp
+class NoteEditor(QTextEdit):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("List Notes App")
-        self.setGeometry(100, 100, 400, 500)
+        self.setup_styling()
         
-        # Create main widget and layout
-        main_widget = QWidget()
-        self.setCentralWidget(main_widget)
-        layout = QVBoxLayout(main_widget)
+    def setup_styling(self):
+        self.setStyleSheet("""
+            QTextEdit {
+                background-color: #F9F1DC;
+                border: none;
+                padding: 20px;
+                color: #333333;
+            }
+        """)
+        font = QFont("Arial", 12)
+        self.setFont(font)
         
-        # Create input field and buttons
-        input_layout = QHBoxLayout()
-        self.input_field = QLineEdit()
-        self.input_field.setPlaceholderText("Enter new item...")
-        self.add_button = QPushButton("Add")
-        self.add_button.clicked.connect(self.add_item)
-        
-        input_layout.addWidget(self.input_field)
-        input_layout.addWidget(self.add_button)
-        
-        # Create custom list widget
-        self.list_widget = CustomListWidget()
-        
-        # Create button layout
-        button_layout = QHBoxLayout()
-        
-        # Create remove button for multiple items
-        self.remove_button = QPushButton("Remove")
-        self.remove_button.clicked.connect(self.remove_items)
-        
-        # Create select all button
-        self.select_all_button = QPushButton("Select All")
-        self.select_all_button.clicked.connect(self.select_all_items)
-        
-        # Create deselect all button
-        self.deselect_all_button = QPushButton("Deselect All")
-        self.deselect_all_button.clicked.connect(self.deselect_all_items)
-        
-        # Add buttons to button layout
-        button_layout.addWidget(self.select_all_button)
-        button_layout.addWidget(self.deselect_all_button)
-        button_layout.addWidget(self.remove_button)
-        
-        # Add widgets to layout
-        layout.addLayout(input_layout)
-        layout.addWidget(self.list_widget)
-        layout.addLayout(button_layout)
-        
-        # Load saved items
-        self.load_items()
-        
-        # Connect enter key to add item
-        self.input_field.returnPressed.connect(self.add_item)
-
-    def add_item(self):
-        text = self.input_field.text().strip()
-        if text:
-            self.list_widget.addItem(text)
-            self.input_field.clear()
-            self.save_items()
-            self.sort_list()
-
-    def remove_items(self):
-        selected_items = self.list_widget.selectedItems()
-        if not selected_items:
-            QMessageBox.information(self, "Information", "Please select items to remove")
-            return
-            
-        confirmation = QMessageBox.question(
-            self,
-            "Confirm Deletion",
-            f"Are you sure you want to remove {len(selected_items)} item(s)?",
-            QMessageBox.Yes | QMessageBox.No
-        )
-        
-        if confirmation == QMessageBox.Yes:
-            for item in selected_items:
-                self.list_widget.takeItem(self.list_widget.row(item))
-            self.save_items()
-            self.sort_list()
- 
     def sort_list(self): #TODO: change to sort by name of files
         self.list_widget.sortItems()
 
@@ -154,9 +87,153 @@ class NotesApp(QMainWindow): #TODO: change to FilesApp
         except Exception as e:
             print(f"Error loading items: {e}")
 
-    def closeEvent(self, event):
-        self.save_items()
-        super().closeEvent(event)
+class FolderTree(QTreeWidget):
+    def __init__(self):
+        super().__init__()
+        self.setup_styling()
+        self.setup_header()
+        self.populate_tree()
+        
+    def setup_styling(self):
+        self.setStyleSheet("""
+            QTreeWidget {
+                background-color: #F9F1DC;
+                border: none;
+                color: #333333;
+            }
+            QTreeWidget::item {
+                padding: 5px;
+                border-bottom: 1px solid transparent;
+            }
+            QTreeWidget::item:selected {
+                background-color: #F9F1DC;
+                color: #333333;
+            }
+        """)
+        
+    def setup_header(self):
+        self.setHeaderHidden(True)
+        
+    def populate_tree(self):
+        # All Notes section
+        all_notes = QTreeWidgetItem(self)
+        all_notes.setText(0, "All Notes")
+        all_notes.setText(1, "2")
+        
+        # Trash section
+        trash = QTreeWidgetItem(self)
+        trash.setText(0, "Trash")
+        trash.setText(1, "12")
+        
+        # Folders section
+        folders_label = QTreeWidgetItem(self)
+        folders_label.setText(0, "Folders")
+        
+        # Sum folder
+        sum_folder = QTreeWidgetItem(folders_label)
+        sum_folder.setText(0, "Sum")
+        sum_folder.setExpanded(True)
+        
+        # Files in Sum folder
+        sweet_txt = QTreeWidgetItem(sum_folder)
+        sweet_txt.setText(0, "Sweet.txt")
+        
+        sour_txt = QTreeWidgetItem(sum_folder)
+        sour_txt.setText(0, "Sour.txt")
+
+class NotesListWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setup_ui()
+        
+    def setup_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Search bar
+        self.search_bar = SearchBar()
+        layout.addWidget(self.search_bar)
+        
+        # Notes list
+        self.notes_frame = QFrame()
+        self.notes_frame.setStyleSheet("""
+            QFrame {
+                background-color: #F9F1DC;
+                border: none;
+                color: #333333;
+            }
+        """)
+        notes_layout = QVBoxLayout(self.notes_frame)
+        
+        # Add some sample notes
+        date = QDateTime.currentDateTime().toString("MM/dd/yy h:mm")
+        for name in ["Sweet.txt", "Sweet.txt"]:
+            note_widget = QWidget()
+            note_layout = QVBoxLayout(note_widget)
+            note_layout.setContentsMargins(10, 5, 10, 5)
+            
+            title = QLabel(name)
+            title.setStyleSheet("font-weight: bold;")
+            date_label = QLabel(date)
+            date_label.setStyleSheet("color: #333333; font-size: 10px;")
+            
+            note_layout.addWidget(title)
+            note_layout.addWidget(date_label)
+            notes_layout.addWidget(note_widget)
+        
+        layout.addWidget(self.notes_frame)
+
+class NotesApp(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Notes")
+        self.setGeometry(100, 100, 1200, 800)
+        self.setup_ui()
+        
+    def setup_ui(self):
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        
+        # Main layout
+        layout = QHBoxLayout(central_widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        
+        # Create splitter
+        splitter = QSplitter(Qt.Horizontal)
+        
+        # Folder tree
+        self.folder_tree = FolderTree()
+        self.folder_tree.setFixedWidth(200)
+        
+        # Notes list
+        self.notes_list = NotesListWidget()
+        self.notes_list.setFixedWidth(300)
+        
+        # Note editor
+        self.note_editor = NoteEditor()
+        
+        # Add widgets to splitter
+        splitter.addWidget(self.folder_tree)
+        splitter.addWidget(self.notes_list)
+        splitter.addWidget(self.note_editor)
+        
+        # Add splitter to layout
+        layout.addWidget(splitter)
+        
+        # Set the sample content
+        self.note_editor.setText("""Text goes here""")
+
+
+    
+    
+
+def main():
+    app = QApplication(sys.argv)
+    window = NotesApp()
+    window.show()
+    sys.exit(app.exec())
+
 
 
 
@@ -169,7 +246,4 @@ class NotesApp(QMainWindow): #TODO: change to FilesApp
 #TODO: Ability to change background color
 
 if __name__ == "__main__":
-    app = QApplication([])
-    window = NotesApp()
-    window.show()
-    app.exec()
+    main()
