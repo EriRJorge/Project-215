@@ -1,5 +1,5 @@
 #list notes app
-#eri r jorge
+#eri r jorge & Zion 
 #10/23/2024 - crated file and imported Pyside6.QtWidgets
 
 from PySide6.QtWidgets import (QApplication, QMainWindow, QPushButton, 
