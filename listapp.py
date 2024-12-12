@@ -3,6 +3,7 @@
 #12/02/2024 - crated file and imported Pyside6.QtWidgets
 #12/02/2024 - created class CustomListWidget
 #12/02/2024 - created class ListNotesApp
+#12/03/2024 - added the add_item method
 
 
 
@@ -16,9 +17,7 @@
 7. User can delete notes"""
 
 
-
-
-
+#imports
 from PySide6.QtWidgets import (QApplication, QMainWindow, QPushButton, 
                               QListWidget, QLineEdit, QVBoxLayout, 
                               QWidget, QHBoxLayout, QMessageBox, QListWidgetItem)
@@ -26,6 +25,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QMouseEvent
 import json
 import os
+
 
 class CustomListWidget(QListWidget):
     def __init__(self):
@@ -45,7 +45,7 @@ class CustomListWidget(QListWidget):
             if item:
                 self.last_clicked_item = item
 
-class ListNotesApp(QMainWindow):
+class NotesApp(QMainWindow): #TODO: change to FilesApp
     def __init__(self):
         super().__init__()
         self.setWindowTitle("List Notes App")
@@ -126,17 +126,17 @@ class ListNotesApp(QMainWindow):
                 self.list_widget.takeItem(self.list_widget.row(item))
             self.save_items()
             self.sort_list()
-
-    def sort_list(self):
+ 
+    def sort_list(self): #TODO: change to sort by name of files
         self.list_widget.sortItems()
 
-    def select_all_items(self):
+    def select_all_items(self): #TODO: change to select all files
         self.list_widget.selectAll()
 
-    def deselect_all_items(self):
+    def deselect_all_items(self): #TODO: change to deselect all files
         self.list_widget.clearSelection()
 
-    def save_items(self):
+    def save_files(self): #TODO: change to be able to save .txt files and name them
         items = []
         for i in range(self.list_widget.count()):
             items.append(self.list_widget.item(i).text())
@@ -144,7 +144,7 @@ class ListNotesApp(QMainWindow):
         with open('list_items.json', 'w') as f:
             json.dump(items, f)
 
-    def load_items(self):
+    def load_files(self): # TODO: change to be able to load .txt files
         try:
             if os.path.exists('list_items.json'):
                 with open('list_items.json', 'r') as f:
@@ -158,8 +158,18 @@ class ListNotesApp(QMainWindow):
         self.save_items()
         super().closeEvent(event)
 
+
+
+#TODO: Ability to create folders
+#TODO: Ability to save files in folders
+#TODO: Ability to delete folders
+#TODO: Ability to Change fonts
+#TODO: Ability to change font size
+#TODO: Ability to change font color
+#TODO: Ability to change background color
+
 if __name__ == "__main__":
     app = QApplication([])
-    window = ListNotesApp()
+    window = NotesApp()
     window.show()
     app.exec()
