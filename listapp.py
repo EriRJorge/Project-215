@@ -222,10 +222,9 @@ class NotesApp(QMainWindow):
         layout.addWidget(splitter)
         
         # Set the sample content
-        self.note_editor.setText("""Text goes here""")
+        self.note_editor.setText("""Text Goes Here""")
 
 
-    
     
 
 def main():
