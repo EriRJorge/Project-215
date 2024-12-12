@@ -1,6 +1,11 @@
-#list notes app
+#Project 2151 - Notes App Lab
 #eri r jorge & Zion 
-#10/23/2024 - crated file and imported Pyside6.QtWidgets
+#12/02/2024 - crated file and imported Pyside6.QtWidgets
+#12/02/2024 - created class CustomListWidget
+#12/02/2024 - created class ListNotesApp
+
+
+
 """MVP: The MVP for this project will be an app that:
 1. Can save a .txt file
 2. Load a .txt file
@@ -9,6 +14,10 @@
 5. User can type notes
 6. User can format
 7. User can delete notes"""
+
+
+
+
 
 from PySide6.QtWidgets import (QApplication, QMainWindow, QPushButton, 
                               QListWidget, QLineEdit, QVBoxLayout, 
