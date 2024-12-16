@@ -38,7 +38,7 @@ import os
 import json
 import shutil
 
-class SearchBar(QLineEdit):
+class SearchBar(QLineEdit):# TODO: Add a search function to the program
     def __init__(self):
         super().__init__()
         self.setPlaceholderText("Search notes...")
@@ -53,7 +53,7 @@ class SearchBar(QLineEdit):
             }
         """)
 
-class NoteEditor(QTextEdit):
+class NoteEditor(QTextEdit): 
     def __init__(self):
         super().__init__()
         self.setup_styling()
@@ -82,28 +82,27 @@ class NoteEditor(QTextEdit):
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Failed to load file: {e}")
 
-    def change_font(self):
-        font, ok = QFontDialog.getFont()  # Unpack the returned tuple
-        if ok:  # Proceed only if the user confirms the font selection
-            self.note_editor.change_font(font.family())  # Pass the font family
+    def change_font(self): #TODO: Fix the font setting to change the font of the text
+        font, ok = QFontDialog.getFont()  
+        if ok: 
+            self.note_editor.change_font(font.family())  
 
-
-    def change_font_color(self):
+    def change_font_color(self): #TODO: Fix the font setting to change the font of the text
         color = QColorDialog.getColor(self.textColor(), self, "Choose Font Color")
         if color.isValid():
             self.setTextColor(color)
 
-    def change_background_color(self):
+    def change_background_color(self): #TODO: Fix the background color setting
         color = QColorDialog.getColor(self.palette().color(self.backgroundRole()), self, "Choose Background Color")
         if color.isValid():
             self.setStyleSheet(f"QTextEdit {{ background-color: {color.name()}; }}")
 
-    def change_font_size(self, size):
+    def change_font_size(self, size): #TODO: Fix the font setting to change the font of the text
         font = self.font()
         font.setPointSize(size)
         self.setFont(font)
 
-class FolderTree(QTreeWidget):
+class FolderTree(QTreeWidget): #TODO: Fix the notes side to update when a new note is added
     def __init__(self):
         super().__init__()
         self.setHeaderHidden(True)
@@ -111,8 +110,7 @@ class FolderTree(QTreeWidget):
         self.customContextMenuRequested.connect(self.open_menu)
         self.populate_tree()
 
-    def populate_tree(self):
-        # Load folders from a JSON file or initialize
+    def populate_tree(self): #TODO: Fix the notes side to update when a new note is added
         self.root = QTreeWidgetItem(self, ["Folders"])
         self.addTopLevelItem(self.root)
 
@@ -139,8 +137,8 @@ class FolderTree(QTreeWidget):
             index = self.indexFromItem(selected_item)
             self.takeTopLevelItem(index.row())
 
-    def get_notes_for_folder(self, folder_name):
-        # Logic to retrieve notes from the specified folder
+    def get_notes_for_folder(self, folder_name): # TODO: Logic to retrieve notes from the specified folder
+        
         return []
 
 class NotesListWidget(QListWidget):
@@ -168,11 +166,11 @@ class NotesListWidget(QListWidget):
         elif action == delete_action:
             self.delete_note()
 
-    def edit_note(self):
+    def edit_note(self): #TODO: add logic to edit the note
         selected_item = self.currentItem()
         if selected_item:
             note_title = selected_item.text()
-            # Logic to load and edit the note
+
             pass
 
     def delete_note(self):
@@ -207,7 +205,7 @@ class NotesApp(QMainWindow):
         self.setup_ui()
 
 
-    def setup_ui(self):
+    def setup_ui(self): #TODO: Fix the font setting to change the font of the text & clean up the UX
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
 
@@ -242,7 +240,7 @@ class NotesApp(QMainWindow):
         # Add actions
         self.create_actions()
 
-    def create_actions(self):
+    def create_actions(self): #TODO: Creates a real file in directory
         toolbar = self.addToolBar("Actions")
 
         # Save note
@@ -350,22 +348,22 @@ class NotesApp(QMainWindow):
         notes = self.folder_tree.get_notes_for_folder(folder_name)
         self.notes_list.update_notes(notes)
 
-    def change_font(self):
+    def change_font(self): #TODO: Fix the font setting to change the font of the text
         font, ok = QFontDialog.getFont()
         if ok:
             self.note_editor.change_font(font.family())
 
-    def change_font_size(self):
+    def change_font_size(self): #TODO: Fix the font setting to change the font of the text
         size, ok = QInputDialog.getInt(self, "Font Size", "Enter font size:", min=8, max=48)
         if ok:
             self.note_editor.change_font_size(size)
 
-    def change_font_color(self):
+    def change_font_color(self): #TODO: Fix the font setting to change the font of the text
         color = QColorDialog.getColor()
         if color.isValid():
             self.note_editor.change_font_color(color.name())
 
-    def change_background_color(self):
+    def change_background_color(self): #TODO: Fix the background color setting
         color = QColorDialog.getColor()
         if color.isValid():
             self.note_editor.change_background_color(color.name())
