@@ -67,8 +67,6 @@ class NoteEditor(QTextEdit):
                 color: #333333;
             }
         """)
-        font = QFont("Arial", 12)
-        self.setFont(font)
 
     def save_file(self, file_path):
         try:
@@ -85,9 +83,10 @@ class NoteEditor(QTextEdit):
             QMessageBox.warning(self, "Error", f"Failed to load file: {e}")
 
     def change_font(self):
-        font, ok = QFontDialog.getFont(self.font(), self, "Choose Font")
-        if ok:
-            self.setFont(font)
+        font, ok = QFontDialog.getFont()  # Unpack the returned tuple
+        if ok:  # Proceed only if the user confirms the font selection
+            self.note_editor.change_font(font.family())  # Pass the font family
+
 
     def change_font_color(self):
         color = QColorDialog.getColor(self.textColor(), self, "Choose Font Color")
@@ -177,11 +176,28 @@ class NotesListWidget(QListWidget):
             pass
 
     def delete_note(self):
-        selected_item = self.currentItem()
-        if selected_item:
-            note_title = selected_item.text()
-            # Logic to delete the note
-            pass
+        selected_item = self.notes_list.currentItem()
+        if not selected_item:
+            QMessageBox.warning(self, "Delete Note", "No note selected.")
+            return
+
+        note_title = selected_item.text()
+        folder = self.folder_tree.currentItem().text(0) if self.folder_tree.currentItem() else "Default"
+        note_path = os.path.join("notes", folder, f"{note_title}.txt")
+
+        reply = QMessageBox.question(
+            self, "Delete Note", f"Are you sure you want to delete the note '{note_title}'?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+
+        if reply == QMessageBox.Yes:
+            try:
+                os.remove(note_path)
+                self.notes_list.takeItem(self.notes_list.row(selected_item))
+                QMessageBox.information(self, "Delete Note", "Note deleted successfully.")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Failed to delete note: {e}")
+
 
 class NotesApp(QMainWindow):
     def __init__(self):
@@ -239,9 +255,6 @@ class NotesApp(QMainWindow):
         load_action.clicked.connect(self.load_note)
         toolbar.addWidget(load_action)
 
-        #delete note
-        del_folder_action = QPushButton()
-
         # Add folder
         add_folder_action = QPushButton(" + Folder")
         add_folder_action.clicked.connect(self.add_folder)
@@ -257,11 +270,6 @@ class NotesApp(QMainWindow):
         font_action.clicked.connect(self.change_font)
         toolbar.addWidget(font_action)
 
-        # Change font size
-        font_size_action = QPushButton("Font Size")
-        font_size_action.clicked.connect(self.change_font_size)
-        toolbar.addWidget(font_size_action)
-
         # Change font color
         font_color_action = QPushButton("Font Color")
         font_color_action.clicked.connect(self.change_font_color)
@@ -271,6 +279,7 @@ class NotesApp(QMainWindow):
         bg_color_action = QPushButton("Background Color")
         bg_color_action.clicked.connect(self.change_background_color)
         toolbar.addWidget(bg_color_action)
+
 
     def save_note(self):
         note_title = self.note_editor.toPlainText().split('\n')[0]
