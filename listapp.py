@@ -41,7 +41,7 @@ import shutil
 class SearchBar(QLineEdit):# TODO: Add a search function to the program
     def __init__(self):
         super().__init__()
-        self.setPlaceholderText("Search notes...")
+        self.setPlaceholderText("Search")
         self.setStyleSheet("""
             QLineEdit {
                 background-color: #F9F1DC;
@@ -52,6 +52,9 @@ class SearchBar(QLineEdit):# TODO: Add a search function to the program
                 color: #333333;
             }
         """)
+    
+    def search(self):
+        pass
 
 class NoteEditor(QTextEdit): 
     def __init__(self):
@@ -83,19 +86,19 @@ class NoteEditor(QTextEdit):
             QMessageBox.warning(self, "Error", f"Failed to load file: {e}")
 
     def change_font(self): #TODO: Fix the font setting to change the font of the text
-        font, ok = QFontDialog.getFont()  
-        if ok: 
-            self.note_editor.change_font(font.family())  
+        font, ok = QFontDialog.getFont()
+        if ok:
+            self.setFont(font)
 
     def change_font_color(self): #TODO: Fix the font setting to change the font of the text
-        color = QColorDialog.getColor(self.textColor(), self, "Choose Font Color")
+        color = QColorDialog.getColor(self.palette().color(self.foregroundRole()), self, "Choose Font Color")
         if color.isValid():
-            self.setTextColor(color)
+            self.setStyleSheet(f"QTextEdit {{ color: {color.name()}; }}")
 
     def change_background_color(self): #TODO: Fix the background color setting
         color = QColorDialog.getColor(self.palette().color(self.backgroundRole()), self, "Choose Background Color")
         if color.isValid():
-            self.setStyleSheet(f"QTextEdit {{ background-color: {color.name()}; }}")
+            self.setStyleSheet(f"QTextEdit {{ background-color: {color.name()}; }})")
 
     def change_font_size(self, size): #TODO: Fix the font setting to change the font of the text
         font = self.font()
