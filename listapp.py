@@ -105,7 +105,7 @@ class NoteEditor(QTextEdit):
         font.setPointSize(size)
         self.setFont(font)
 
-class FolderTree(QTreeWidget): #TODO: Fix the notes side to update when a new note is added
+class FolderTree(QTreeWidget): #TODO: Fix the notes side to update when a new note is ad    ded
     def __init__(self):
         super().__init__()
         self.setHeaderHidden(True)
@@ -141,8 +141,10 @@ class FolderTree(QTreeWidget): #TODO: Fix the notes side to update when a new no
             self.takeTopLevelItem(index.row())
 
     def get_notes_for_folder(self, folder_name): # TODO: Logic to retrieve notes from the specified folder
-        
-        return []
+        folder_path = os.path.join("notes", folder_name)
+        if os.path.exists(folder_path):
+            notes = os.listdir(folder_path)
+            return [{"title": os.path.splitext(note)[0]} for note in notes]
 
 class NotesListWidget(QListWidget):
     def __init__(self):
