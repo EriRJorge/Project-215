@@ -46,4 +46,11 @@ Fix: TODO: Fix the files to save when the program is closed
 Bug: The program does not have a search function
 Fix: TODO: Add a search function to the program
 
+5.
+Bug: The app can not change background color
+Fix: TODO: Add a function to change the background color of the app
+Errors in countered: 
+# TypeError: NoteEditor.change_background_color() takes 1 positional argument but 2 were given #
+
+
 '''
