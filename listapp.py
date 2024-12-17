@@ -60,6 +60,9 @@ class NoteEditor(QTextEdit):
     def __init__(self):
         super().__init__()
         self.setup_styling()
+        self.current_font = QFont()
+        self.current_color = QColor(0, 0, 0)
+        self.setup_styling()
 
     def setup_styling(self):
         self.setStyleSheet("""
@@ -86,14 +89,34 @@ class NoteEditor(QTextEdit):
             QMessageBox.warning(self, "Error", f"Failed to load file: {e}")
 
     def change_font(self): #TODO: Fix the font setting to change the font of the text
-        font, ok = QFontDialog.getFont()
+        font, ok = QFontDialog.getFont(self.current_font, self)
         if ok:
-            self.setFont(font)
+            self.current_font = font
+            self.apply_text_styling()
 
     def change_font_color(self): #TODO: Fix the font setting to change the font of the text
-        color = QColorDialog.getColor(self.palette().color(self.foregroundRole()), self, "Choose Font Color")
+        color = QColorDialog.getFont(self.current_font, self, "Choose Font Color")
         if color.isValid():
-            self.setStyleSheet(f"QTextEdit {{ color: {color.name()}; }}")
+            self.current_color = color
+            self.apply_text_styling()
+        # color = QColorDialog.getColor(self.palette().color(self.foregroundRole()), self, "Choose Font Color")
+        # if color.isValid():
+        #     self.setStyleSheet(f"QTextEdit {{ color: {color.name()}; }}")
+
+    def apply_text_styling(self):
+        self.setFont(self.currentFont)
+        palette = self.palette()
+        palette.setColor(self.foregroundRole(), self.current_color)
+        self.setPalette(palette)
+
+        self.setStyleSheet(f"""
+            QTextEdit {{
+                           background-color: #F9F1DC;
+                           border: none;
+                           padding; 20px;
+                           color: {self.current_color.name()};
+            }}
+    """)
 
     def change_background_color(self): #TODO: Fix the background color setting
         color = QColorDialog.getColor(self.palette().color(self.backgroundRole()), self, "Choose Background Color")
@@ -101,9 +124,9 @@ class NoteEditor(QTextEdit):
             self.setStyleSheet(f"QTextEdit {{ background-color: {color.name()}; }})")
 
     def change_font_size(self, size): #TODO: Fix the font setting to change the font of the text
-        font = self.font()
-        font.setPointSize(size)
-        self.setFont(font)
+        font, ok =QFontDialog.getFont()
+        if ok:
+            self.setFont(font)
 
 class FolderTree(QTreeWidget): #TODO: Fix the notes side to update when a new note is ad    ded
     def __init__(self):
@@ -356,7 +379,7 @@ class NotesApp(QMainWindow):
     def change_font(self): #TODO: Fix the font setting to change the font of the text
         font, ok = QFontDialog.getFont()
         if ok:
-            self.note_editor.change_font(font.family())
+            self.note_editor.setFont(font)
 
     def change_font_size(self): #TODO: Fix the font setting to change the font of the text
         size, ok = QInputDialog.getInt(self, "Font Size", "Enter font size:", min=8, max=48)
