@@ -12,6 +12,8 @@
 # 12/10/2024 - added the NotesApp class
 # 12/11/2024 - added the setup_styling method to the NoteEditor class
 # 12/12/2024 - added the SearchBar class
+# 12/17/2024 - added the make_bullet_points method to the NoteEditor class
+# 12/17/2024 - added the KeyPressEvent method to the NoteEditor class
 
 
 
@@ -104,6 +106,33 @@ class NoteEditor(QTextEdit):
                 color: #333333;
             }}
         """)
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
+            cursor = self.textCursor()
+            current_block = cursor.block().text()
+
+            if current_block.strip().startswith('• '):
+                # If the current line is just a bullet point, remove it
+                if current_block.strip() == '• ':
+                    cursor.movePosition(QTextCursor.StartOfBlock, QTextCursor.KeepAnchor)
+                    cursor.removeSelectedText()
+                    self.setTextCursor(cursor)
+                else:
+                    # Insert a new line and a bullet point
+                    super().keyPressEvent(event)
+                    cursor = self.textCursor()
+                    cursor.insertText("• ")
+                    self.setTextCursor(cursor)
+                return
+
+        super().keyPressEvent(event)
+    
+    def make_bullet_points(self):
+        cursor = self.textCursor()
+        cursor.insertText('• ')
+        self.setTextCursor(cursor)
+
 
 class NotesListWidget(QListWidget):
     note_selected = pyqtSignal(str)
@@ -220,6 +249,9 @@ class NotesApp(QMainWindow):
         self.color_action = QAction("Color", self)
         self.color_action.triggered.connect(self.change_color)
 
+        self.bullet_action = QAction("Bullet", self)
+        self.bullet_action.triggered.connect(self.make_bullet_points)
+
     def create_toolbar(self):
         toolbar = QToolBar()
         self.addToolBar(toolbar)
@@ -232,6 +264,8 @@ class NotesApp(QMainWindow):
         toolbar.addAction(self.delete_action)
         toolbar.addSeparator()
         toolbar.addAction(self.color_action)
+        toolbar.addSeparator()
+        toolbar.addAction(self.bullet_action)
         
         # adds font combo
         self.font_combo = QComboBox()
@@ -248,6 +282,10 @@ class NotesApp(QMainWindow):
         self.size_combo.currentTextChanged.connect(
             lambda size: self.note_editor.change_font_size(float(size)))
         toolbar.addWidget(self.size_combo)
+
+
+    def make_bullet_points(self):
+        self.note_editor.make_bullet_points()
 
     def new_note(self):
         self.note_editor.clear()
