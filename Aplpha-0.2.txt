@@ -175,39 +175,39 @@ class NotesApp(QMainWindow):
         self.create_actions()
         self.create_toolbar()
         
-        # Create notes directory if it doesn't exist
+        # makes sure the notes folder exists
         if not os.path.exists("notes"):
             os.makedirs("notes")
 
     def setup_ui(self):
-        # Central widget
+        # central widget
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         
-        # Main layout
+        # main layout
         layout = QVBoxLayout(central_widget)
         
-        # Create search bar
+        # make search bar
         self.search_bar = SearchBar()
         self.search_bar.searchRequested.connect(self.search_notes)
         layout.addWidget(self.search_bar)
         
-        # Create splitter for main content
+        # make splitter
         splitter = QSplitter(Qt.Horizontal)
         
-        # Create and set up notes list
+        # make and set up notes list
         self.notes_list = NotesListWidget()
         self.notes_list.itemClicked.connect(self.note_selected)
         splitter.addWidget(self.notes_list)
         
-        # Create and set up note editor
+        # make and set up note editor
         self.note_editor = NoteEditor()
         splitter.addWidget(self.note_editor)
         
         layout.addWidget(splitter)
 
     def create_actions(self):
-        # File actions
+        # file actions
         self.new_action = QAction("New", self)
         self.new_action.setShortcut("Ctrl+N")
         self.new_action.triggered.connect(self.new_note)
@@ -220,10 +220,6 @@ class NotesApp(QMainWindow):
         self.delete_action.setShortcut("Delete")
         self.delete_action.triggered.connect(self.delete_note)
 
-        # Format actions
-        self.font_action = QAction("Font", self)
-        self.font_action.triggered.connect(self.change_font)
-
         self.color_action = QAction("Color", self)
         self.color_action.triggered.connect(self.change_color)
 
@@ -231,22 +227,23 @@ class NotesApp(QMainWindow):
         toolbar = QToolBar()
         self.addToolBar(toolbar)
         
-        # Add actions to toolbar
+        # add actions to toolbar
         toolbar.addAction(self.new_action)
+        toolbar.addSeparator()
         toolbar.addAction(self.save_action)
+        toolbar.addSeparator()
         toolbar.addAction(self.delete_action)
         toolbar.addSeparator()
-        toolbar.addAction(self.font_action)
         toolbar.addAction(self.color_action)
         
-        # Add font selection combo
+        # adds font combo
         self.font_combo = QComboBox()
         self.font_combo.addItems(QFontDatabase.families())
         self.font_combo.currentTextChanged.connect(
             lambda family: self.note_editor.change_font(family))
         toolbar.addWidget(self.font_combo)
         
-        # Add font size combo
+        # adds size combo
         self.size_combo = QComboBox()
         sizes = [str(size) for size in [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72]]
         self.size_combo.addItems(sizes)

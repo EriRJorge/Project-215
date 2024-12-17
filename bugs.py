@@ -86,8 +86,8 @@ Traceback (most recent call last):
                                             ^^^^^^^^^^^^^^^^^
 7.
 Bug: when the font and font color are changed the change dose not stay and is applied through out all notes
-Fix: TODO: Fix the font and font color to stay with the note that was changed
-                                            
+Fix: TODO: Fix the font and font color to stay with the note that was changed 
+                                    
 8.
 Bug: when the app is closed the notes are not automatically reloaded after the app is opened again
 Fix: TODO: Fix the notes to be automatically loaded when the app is opened again

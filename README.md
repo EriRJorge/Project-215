@@ -1,7 +1,6 @@
 #Set up#
 1. run pip install PySide6 (if using VsCode)
-2. run .exe file otherwise
-
+2. run .exe file in the exe file folder otherwise
 
 
 
