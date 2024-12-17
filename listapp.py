@@ -12,17 +12,8 @@
 # 12/10/2024 - added the NotesApp class
 # 12/11/2024 - added the setup_styling method to the NoteEditor class
 # 12/12/2024 - added the SearchBar class
-# 12/15/2024 - built the MVP
-# 12/15/2024 - added the create_actions method
-# 12/15/2024 - added the create_toolbar method
-# 12/15/2024 - added the new_note method
-# 12/15/2024 - added the save_note method
-# 12/15/2024 - added the delete_note method
-# 12/15/2024 - added the note_selected method
-# 12/15/2024 - added the update_notes_list method
-# 12/15/2024 - added the search_notes method
-# 12/16/2024 - added all font methods to the NoteEditor class
-# 12/16/2024 - added the closeEvent method
+ #12/16/2024 - 
+
 
 
 
@@ -37,46 +28,42 @@
 
 
 #imports
-from PySide6.QtWidgets import (QApplication, QMainWindow,
-                              QLineEdit, QWidget,
-                              QSplitter, QTextEdit, QColorDialog, QFontDialog, QMessageBox,  QComboBox,
-                              QListWidget,  QMenu, QInputDialog, QVBoxLayout, QToolBar)
-from PySide6.QtCore import Qt, Signal as pyqtSignal
-from PySide6.QtGui import QColor, QTextCharFormat, QFontDatabase, QAction
+from PySide6.QtWidgets import (QApplication, QMainWindow, QPushButton, QTreeWidget, QTreeWidgetItem,
+                              QLineEdit, QVBoxLayout, QWidget, QHBoxLayout, QLabel, 
+                              QSplitter, QTextEdit, QFrame, QColorDialog, QFontDialog, QMessageBox, QFileDialog, QComboBox,
+                              QListWidget, QListWidgetItem, QMenu, QInputDialog)
+from PySide6.QtCore import Qt, QDateTime
+from PySide6.QtGui import QFont, QColor
 import sys
 import os
+import json
+import shutil
 
-class SearchBar(QLineEdit):
-    searchRequested = pyqtSignal(str)
-    
+class SearchBar(QLineEdit):# TODO: Add a search function to the program
     def __init__(self):
         super().__init__()
-        self.setPlaceholderText("Search notes...")
-        self.textChanged.connect(self.on_text_changed)
-        self.setMinimumWidth(200)
+        self.setPlaceholderText("Search")
         self.setStyleSheet("""
             QLineEdit {
+                background-color: #F9F1DC;
                 border: 1px solid #CCCCCC;
                 border-radius: 5px;
                 padding: 5px;
-                margin: 5px;
+                margin: 10px;
+                color: #333333;
             }
         """)
     
-    def on_text_changed(self, text):
-        self.searchRequested.emit(text)
+    def search(self):
+        pass
 
-class NoteEditor(QTextEdit):
+class NoteEditor(QTextEdit): 
     def __init__(self):
         super().__init__()
         self.setup_styling()
-<<<<<<< HEAD
         self.current_font = QFont()
         self.current_color = QColor(0, 0, 0)
         self.setup_styling()
-=======
-        self.current_file = None
->>>>>>> e813456420402d355d3864800b5a75a674241e35
 
     def setup_styling(self):
         self.setStyleSheet("""
@@ -88,25 +75,20 @@ class NoteEditor(QTextEdit):
             }
         """)
 
-    def change_font(self, font_family):
-        cursor = self.textCursor()
-        if cursor.hasSelection():
-            format = QTextCharFormat()
-            format.setFontFamily(font_family)
-            cursor.mergeCharFormat(format)
-        else:
-            self.setFontFamily(font_family)
+    def save_file(self, file_path):
+        try:
+            with open(file_path, "w") as file:
+                file.write(self.toPlainText())
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Failed to save file: {e}")
 
-    def change_font_size(self, size):
-        cursor = self.textCursor()
-        if cursor.hasSelection():
-            format = QTextCharFormat()
-            format.setFontPointSize(size)
-            cursor.mergeCharFormat(format)
-        else:
-            self.setFontPointSize(size)
+    def load_file(self, file_path):
+        try:
+            with open(file_path, "r") as file:
+                self.setText(file.read())
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Failed to load file: {e}")
 
-<<<<<<< HEAD
     def change_font(self): #TODO: Fix the font setting to change the font of the text
         font, ok = QFontDialog.getFont(self.current_font, self)
         if ok:
@@ -187,258 +169,239 @@ class FolderTree(QTreeWidget): #TODO: Fix the notes side to update when a new no
         if os.path.exists(folder_path):
             notes = os.listdir(folder_path)
             return [{"title": os.path.splitext(note)[0]} for note in notes]
-=======
-    def change_font_color(self, color):
-        cursor = self.textCursor()
-        if cursor.hasSelection():
-            format = QTextCharFormat()
-            format.setForeground(QColor(color))
-            cursor.mergeCharFormat(format)
-        else:
-            self.setTextColor(QColor(color))
-
-    def change_background_color(self, color):
-        self.setStyleSheet(f"""
-            QTextEdit {{
-                background-color: {color};
-                border: none;
-                padding: 20px;
-                color: #333333;
-            }}
-        """)
->>>>>>> e813456420402d355d3864800b5a75a674241e35
 
 class NotesListWidget(QListWidget):
-    note_selected = pyqtSignal(str)
-
     def __init__(self):
         super().__init__()
         self.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.customContextMenuRequested.connect(self.show_context_menu)
-        self.setStyleSheet("""
-            QListWidget {
-                background-color: #F5F5F5;
-                border: none;
-            }
-            QListWidget::item {
-                padding: 5px;
-                margin: 2px;
-                border-radius: 3px;
-                color: #333333;
-            }
-            QListWidget::item:selected {
-                background-color: #E0E0E0;
-            }
-        """)
+        self.customContextMenuRequested.connect(self.open_menu)
+        self.notes = []
 
-    def show_context_menu(self, position):
+    def update_notes(self, notes):
+        self.clear()
+        self.notes = notes
+        for note in self.notes:
+            item = QListWidgetItem(note['title'])
+            self.addItem(item)
+
+    def open_menu(self, position):
         menu = QMenu()
+        edit_action = menu.addAction("Edit Note")
         delete_action = menu.addAction("Delete Note")
-        rename_action = menu.addAction("Rename Note")
-        action = menu.exec_(self.mapToGlobal(position))
+        action = menu.exec_(self.viewport().mapToGlobal(position))
+        
+        if action == edit_action:
+            self.edit_note()
+        elif action == delete_action:
+            self.delete_note()
 
-        if action == delete_action:
-            self.delete_selected_note()
-        elif action == rename_action:
-            self.rename_selected_note()
+    def edit_note(self): #TODO: add logic to edit the note
+        selected_item = self.currentItem()
+        if selected_item:
+            note_title = selected_item.text()
 
-    def delete_selected_note(self):
-        current_item = self.currentItem()
-        if current_item:
-            reply = QMessageBox.question(self, 'Delete Note', 
-                                       f'Are you sure you want to delete "{current_item.text()}"?',
-                                       QMessageBox.Yes | QMessageBox.No)
-            if reply == QMessageBox.Yes:
-                self.takeItem(self.row(current_item))
+            pass
 
-    def rename_selected_note(self):
-        current_item = self.currentItem()
-        if current_item:
-            new_name, ok = QInputDialog.getText(self, 'Rename Note', 
-                                              'Enter new name:', 
-                                              text=current_item.text())
-            if ok and new_name:
-                current_item.setText(new_name)
+    def delete_note(self):
+        selected_item = self.notes_list.currentItem()
+        if not selected_item:
+            QMessageBox.warning(self, "Delete Note", "No note selected.")
+            return
+
+        note_title = selected_item.text()
+        folder = self.folder_tree.currentItem().text(0) if self.folder_tree.currentItem() else "Default"
+        note_path = os.path.join("notes", folder, f"{note_title}.txt")
+
+        reply = QMessageBox.question(
+            self, "Delete Note", f"Are you sure you want to delete the note '{note_title}'?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+
+        if reply == QMessageBox.Yes:
+            try:
+                os.remove(note_path)
+                self.notes_list.takeItem(self.notes_list.row(selected_item))
+                QMessageBox.information(self, "Delete Note", "Note deleted successfully.")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Failed to delete note: {e}")
+
 
 class NotesApp(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Notes App")
+        self.setWindowTitle("Notes")
         self.setGeometry(100, 100, 1200, 800)
-        
-        # set up the main window
-        self.current_file = None
         self.setup_ui()
-        self.create_actions()
-        self.create_toolbar()
-        
-        # makes sure the notes folder exists
-        if not os.path.exists("notes"):
-            os.makedirs("notes")
 
-    def setup_ui(self):
-        # central widget
+
+    def setup_ui(self): #TODO: Fix the font setting to change the font of the text & clean up the UX
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        
-        # main layout
-        layout = QVBoxLayout(central_widget)
-        
-        # make search bar
-        self.search_bar = SearchBar()
-        self.search_bar.searchRequested.connect(self.search_notes)
-        layout.addWidget(self.search_bar)
-        
-        # make splitter
+
+        # Main layout
+        layout = QHBoxLayout(central_widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        # Create splitter
         splitter = QSplitter(Qt.Horizontal)
-        
-        # make and set up notes list
+
+        # Folder tree
+        self.folder_tree = FolderTree()
+        self.folder_tree.setFixedWidth(200)
+        self.folder_tree.itemClicked.connect(self.folder_selected)
+
+        # Notes list
         self.notes_list = NotesListWidget()
-        self.notes_list.itemClicked.connect(self.note_selected)
-        splitter.addWidget(self.notes_list)
-        
-        # make and set up note editor
+        self.notes_list.setFixedWidth(300)
+
+        # Note editor
         self.note_editor = NoteEditor()
+
+        # Add widgets to splitter
+        splitter.addWidget(self.folder_tree)
+        splitter.addWidget(self.notes_list)
         splitter.addWidget(self.note_editor)
-        
+
+        # Add splitter to layout
         layout.addWidget(splitter)
 
-    def create_actions(self):
-        # create actions
-        self.new_action = QAction("New Note", self)
-        self.new_action.setShortcut("Ctrl+N")
-        self.new_action.triggered.connect(self.new_note)
+        # Add actions
+        self.create_actions()
 
-        self.save_action = QAction("Save Note", self)
-        self.save_action.setShortcut("Ctrl+S")
-        self.save_action.triggered.connect(self.save_note)
+    def create_actions(self): #TODO: Creates a real file in directory
+        toolbar = self.addToolBar("Actions")
 
-        self.delete_action = QAction("Delete Note", self)
-        self.delete_action.setShortcut("Delete")
-        self.delete_action.triggered.connect(self.delete_note)
+        # Save note
+        save_action = QPushButton("Save")
+        save_action.clicked.connect(self.save_note)
+        toolbar.addWidget(save_action)
 
-        self.color_action = QAction("Font Color", self)
-        self.color_action.triggered.connect(self.change_color)
+        # Load note
+        load_action = QPushButton("Load")
+        load_action.clicked.connect(self.load_note)
+        toolbar.addWidget(load_action)
 
-    def create_toolbar(self):
-        toolbar = QToolBar()
-        self.addToolBar(toolbar)
-        
-        # add actions to toolbar
-        toolbar.addAction(self.new_action)
-        toolbar.addSeparator()
-        toolbar.addAction(self.save_action)
-        toolbar.addSeparator()
-        toolbar.addAction(self.delete_action)
-        toolbar.addSeparator()
-        toolbar.addAction(self.color_action)
-        
-        # makes the font combo box
-        self.font_combo = QComboBox()
-        self.font_combo.addItems(QFontDatabase.families())
-        self.font_combo.currentTextChanged.connect(
-            lambda family: self.note_editor.change_font(family))
-        toolbar.addWidget(self.font_combo)
-        
-        # adds the size combo box
-        self.size_combo = QComboBox()
-        sizes = [str(size) for size in [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72]]
-        self.size_combo.addItems(sizes)
-        self.size_combo.setCurrentText("12")
-        self.size_combo.currentTextChanged.connect(
-            lambda size: self.note_editor.change_font_size(float(size)))
-        toolbar.addWidget(self.size_combo)
+        # Add folder
+        add_folder_action = QPushButton(" + Folder")
+        add_folder_action.clicked.connect(self.add_folder)
+        toolbar.addWidget(add_folder_action)
 
-    def new_note(self):
-        self.note_editor.clear()
-        self.current_file = None
-        self.statusBar().showMessage("New note created")
+        # Delete folder
+        delete_folder_action = QPushButton(" - Folder")
+        delete_folder_action.clicked.connect(self.delete_folder)
+        toolbar.addWidget(delete_folder_action)
+
+        # Change font
+        font_action = QPushButton("Change Font")
+        font_action.clicked.connect(self.change_font)
+        toolbar.addWidget(font_action)
+
+        # Change font color
+        font_color_action = QPushButton("Font Color")
+        font_color_action.clicked.connect(self.change_font_color)
+        toolbar.addWidget(font_color_action)
+
+        # Change background color
+        bg_color_action = QPushButton("Background Color")
+        bg_color_action.clicked.connect(self.change_background_color)
+        toolbar.addWidget(bg_color_action)
+
 
     def save_note(self):
-        if not self.note_editor.toPlainText().strip():
-            QMessageBox.warning(self, "Error", "Cannot save empty note")
-            return
-            
-        if not self.current_file:
-            title, ok = QInputDialog.getText(self, "Save Note", "Enter note title:")
-            if ok and title:
-                self.current_file = os.path.join("notes", f"{title}.txt")
+        note_title = self.note_editor.toPlainText().split('\n')[0]
+        folder = self.folder_tree.currentItem().text(0) if self.folder_tree.currentItem() else "Default"
+        file_path = os.path.join("notes", folder, f"{note_title}.txt")
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        with open(file_path, 'w') as file:
+            file.write(self.note_editor.toPlainText())
+        QMessageBox.information(self, "Save Note", "Note saved successfully.")
+
+    def load_note(self):
+        folder = self.folder_tree.currentItem().text(0) if self.folder_tree.currentItem() else "Default"
+        file_path, _ = QFileDialog.getOpenFileName(self, "Load Note", os.path.join("notes", folder), "Text Files (*.txt)")
+        if file_path:
+            with open(file_path, 'r') as file:
+                content = file.read()
+                self.note_editor.setPlainText(content)
+
+    def add_folder(self):
+        self.folder_tree.create_folder()
+
+    def delete_folder(self):
+        folder_to_del = self.folder_tree.currentItem()
+        prompt = QMessageBox.question(self, "Delete Folder", f"Are you sure you want to delete the folder'{folder_to_del.text(0)} '?", QMessageBox.Yes | QMessageBox.No)
+
+        if prompt == QMessageBox.Yes:
+            folder_del_name = folder_to_del.text(0)
+            folder_del_path = os.path.join("notes", folder_del_name)
+
+            shutil.rmtree(folder_del_path)
+
+            parent = folder_to_del.parent()
+            if parent:
+                parent.removeChild(folder_to_del)
+
+            QMessageBox.information(self, "Delete Folder", "Folder Deleted")
+        else:
+            QMessageBox.information(self, "Delete Folder", "Folder not Deleted")
         
-        if self.current_file:
-            try:
-                with open(self.current_file, 'w') as file:
-                    file.write(self.note_editor.toPlainText())
-                self.statusBar().showMessage(f"Saved to {self.current_file}")
-                self.update_notes_list()
-            except Exception as e:
-                QMessageBox.warning(self, "Error", f"Failed to save note: {str(e)}")
+        self.folder_tree.delete_folder()
 
     def delete_note(self):
-        if not self.current_file:
+        note_to_del = self.currentItem()
+        if not note_to_del:
             return
-            
-        reply = QMessageBox.question(self, "Delete Note",
-                                   "Are you sure you want to delete this note?",
-                                   QMessageBox.Yes | QMessageBox.No)
-                                   
+    
+        note_title = note_to_del.text()
+
+        reply = QMessageBox.question(self, "Delete Note", f"Are you sure you want to delete the note '{note_title}'?", QMessageBox.Yes | QMessageBox.No)
+    
         if reply == QMessageBox.Yes:
+            current_folder = self.parent().folder_tree.currentItem().text(0) if self.parent().folder_tree.currentItem() else "Default"
+
+            file_path = os.path.join("notes", current_folder, f"{note_title}.txt")
+        
             try:
-                os.remove(self.current_file)
-                self.new_note()
-                self.update_notes_list()
-                self.statusBar().showMessage("Note deleted")
+
+                os.remove(file_path)
+
+                self.takeItem(self.row(note_to_del))
+            
+                QMessageBox.information(self, "Delete Note", "Note deleted successfully.")
             except Exception as e:
-                QMessageBox.warning(self, "Error", f"Failed to delete note: {str(e)}")
+                QMessageBox.warning(self, "Delete Note", f"Failed to delete note: {str(e)}")
 
-    def note_selected(self, item):
-        file_path = os.path.join("notes", f"{item.text()}.txt")
-        if os.path.exists(file_path):
-            with open(file_path, 'r') as file:
-                self.note_editor.setPlainText(file.read())
-            self.current_file = file_path
-            self.statusBar().showMessage(f"Loaded {file_path}")
+    def folder_selected(self, item, column):
+        folder_name = item.text(0)
+        notes = self.folder_tree.get_notes_for_folder(folder_name)
+        self.notes_list.update_notes(notes)
 
-    def update_notes_list(self):
-        self.notes_list.clear()
-        if os.path.exists("notes"):
-            for filename in os.listdir("notes"):
-                if filename.endswith(".txt"):
-                    self.notes_list.addItem(filename[:-4])
-
-    def search_notes(self, text):
-        for i in range(self.notes_list.count()):
-            item = self.notes_list.item(i)
-            item.setHidden(text.lower() not in item.text().lower())
-
-    def change_font(self):
+    def change_font(self): #TODO: Fix the font setting to change the font of the text
         font, ok = QFontDialog.getFont()
         if ok:
             self.note_editor.setFont(font)
 
-    def change_color(self):
+    def change_font_size(self): #TODO: Fix the font setting to change the font of the text
+        size, ok = QInputDialog.getInt(self, "Font Size", "Enter font size:", min=8, max=48)
+        if ok:
+            self.note_editor.change_font_size(size)
+
+    def change_font_color(self): #TODO: Fix the font setting to change the font of the text
         color = QColorDialog.getColor()
         if color.isValid():
             self.note_editor.change_font_color(color.name())
 
-    def closeEvent(self, event):
-        if self.note_editor.toPlainText().strip():
-            reply = QMessageBox.question(self, "Save Changes",
-                                       "Do you want to save your changes?",
-                                       QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
-            
-            if reply == QMessageBox.Yes:
-                self.save_note()
-                event.accept()
-            elif reply == QMessageBox.No:
-                event.accept()
-            else:
-                event.ignore()
+    def change_background_color(self): #TODO: Fix the background color setting
+        color = QColorDialog.getColor()
+        if color.isValid():
+            self.note_editor.change_background_color(color.name())
 
 def main():
     app = QApplication(sys.argv)
     window = NotesApp()
     window.show()
-    sys.exit(app.exec())
+    sys.exit(app.exec_())
 
 if __name__ == "__main__":
     main()
