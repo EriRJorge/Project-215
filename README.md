@@ -1,24 +1,6 @@
 #Set up#
-1. install PySide6
-2. 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+1. run pip install PySide6 (if using VsCode)
+2. run .exe file otherwise
 
 
 
