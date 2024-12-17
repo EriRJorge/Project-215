@@ -145,10 +145,8 @@ class NoteEditor(QTextEdit):
 
 
 class NotesListWidget(QListWidget):
-    note_selected = pyqtSignal(str)
-
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):  # Accept parent
+        super().__init__(parent)
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
         self.setStyleSheet("""
@@ -174,7 +172,8 @@ class NotesListWidget(QListWidget):
         action = menu.exec_(self.mapToGlobal(position))
 
         if action == delete_action:
-            self.delete_selected_note()
+            if hasattr(self.parent(), "delete_note"):  # Check if parent has delete_note
+                self.parent().delete_note()
         elif action == rename_action:
             self.rename_selected_note()
 
@@ -326,21 +325,37 @@ class NotesApp(QMainWindow):
                 QMessageBox.warning(self, "Error", f"Failed to save note: {str(e)}")
 
     def delete_note(self):
-        if not self.current_file:
-            return
-            
-        reply = QMessageBox.question(self, "Delete Note",
-                                   "Are you sure you want to delete this note?",
-                                   QMessageBox.Yes | QMessageBox.No)
-                                   
-        if reply == QMessageBox.Yes:
-            try:
-                os.remove(self.current_file)
-                self.new_note()
-                self.update_notes_list()
-                self.statusBar().showMessage("Note deleted")
-            except Exception as e:
-                QMessageBox.warning(self, "Error", f"Failed to delete note: {str(e)}")
+        current_item = self.notes_list.currentItem()
+        if current_item:
+            note_title = current_item.text()
+            file_path = os.path.join("notes", f"{note_title}.json")  # Adjust for .json files
+
+            # Confirm deletion
+            reply = QMessageBox.question(
+                self, "Delete Note",
+                f"Are you sure you want to delete the note '{note_title}'?",
+                QMessageBox.Yes | QMessageBox.No
+            )
+
+            if reply == QMessageBox.Yes:
+                try:
+                    # Delete the file
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+
+                    # Clear the editor and reset the current file if this was the open note
+                    if self.current_file == file_path:
+                        self.note_editor.clear()
+                        self.current_file = None
+
+                    # Remove from notes list
+                    self.notes_list.takeItem(self.notes_list.row(current_item))
+
+                    # Notify user
+                    self.statusBar().showMessage(f"Deleted note: {note_title}")
+                except Exception as e:
+                    QMessageBox.warning(self, "Error", f"Failed to delete note: {str(e)}")
+
 
     def note_selected(self, item):
         file_path = os.path.join("notes", f"{item.text()}.json")  # Use .json extension
