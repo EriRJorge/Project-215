@@ -80,8 +80,6 @@ class NoteEditor(QTextEdit):
             format = QTextCharFormat()
             format.setFontFamily(font_family)
             cursor.mergeCharFormat(format)
-        else:
-            self.setFontFamily(font_family)
 
     def change_font_size(self, size):
         cursor = self.textCursor()
@@ -89,8 +87,6 @@ class NoteEditor(QTextEdit):
             format = QTextCharFormat()
             format.setFontPointSize(size)
             cursor.mergeCharFormat(format)
-        else:
-            self.setFontPointSize(size)
 
     def change_font_color(self, color):
         cursor = self.textCursor()
@@ -98,8 +94,6 @@ class NoteEditor(QTextEdit):
             format = QTextCharFormat()
             format.setForeground(QColor(color))
             cursor.mergeCharFormat(format)
-        else:
-            self.setTextColor(QColor(color))
 
     def change_background_color(self, color):
         self.setStyleSheet(f"""
@@ -179,6 +173,9 @@ class NotesApp(QMainWindow):
         if not os.path.exists("notes"):
             os.makedirs("notes")
 
+        # update notes list
+        self.update_notes_list()
+
     def setup_ui(self):
         # central widget
         central_widget = QWidget()
@@ -227,7 +224,7 @@ class NotesApp(QMainWindow):
         toolbar = QToolBar()
         self.addToolBar(toolbar)
         
-        # add actions to toolbar
+        # adds action buttons to toolbar
         toolbar.addAction(self.new_action)
         toolbar.addSeparator()
         toolbar.addAction(self.save_action)
@@ -316,7 +313,11 @@ class NotesApp(QMainWindow):
     def change_font(self):
         font, ok = QFontDialog.getFont()
         if ok:
-            self.note_editor.setFont(font)
+            cursor = self.note_editor.textCursor()
+        if cursor.hasSelection():
+            format = QTextCharFormat()
+            format.setFont(font)
+            cursor.mergeCharFormat(format)
 
     def change_color(self):
         color = QColorDialog.getColor()
