@@ -28,8 +28,8 @@
 
 #imports
 from PySide6.QtWidgets import (QApplication, QMainWindow, QPushButton, QTreeWidget, QTreeWidgetItem,
-                              QLineEdit, QVBoxLayout, QWidget, QHBoxLayout, QLabel, 
-                              QSplitter, QTextEdit, QFrame, QColorDialog, QFontDialog, QMessageBox, QFileDialog, QComboBox,
+                              QLineEdit, QWidget, QHBoxLayout, 
+                              QSplitter, QTextEdit, QColorDialog, QFontDialog, QMessageBox, QFileDialog, QComboBox,
                               QListWidget, QListWidgetItem, QMenu, QInputDialog)
 from PySide6.QtCore import Qt, QDateTime
 from PySide6.QtGui import QFont, QColor
