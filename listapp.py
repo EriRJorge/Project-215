@@ -37,16 +37,14 @@
 
 
 #imports
-from PySide6.QtWidgets import (QApplication, QMainWindow, QPushButton, QTreeWidget, QTreeWidgetItem,
-                              QLineEdit, QWidget, QHBoxLayout, 
-                              QSplitter, QTextEdit, QColorDialog, QFontDialog, QMessageBox, QFileDialog, QComboBox,
-                              QListWidget, QListWidgetItem, QMenu, QInputDialog, QVBoxLayout, QToolBar)
-from PySide6.QtCore import Qt, QDateTime, Signal as pyqtSignal
-from PySide6.QtGui import QFont, QColor, QKeyEvent, QTextCharFormat, QTextCursor, QFontDatabase, QAction
+from PySide6.QtWidgets import (QApplication, QMainWindow,
+                              QLineEdit, QWidget,
+                              QSplitter, QTextEdit, QColorDialog, QFontDialog, QMessageBox,  QComboBox,
+                              QListWidget,  QMenu, QInputDialog, QVBoxLayout, QToolBar)
+from PySide6.QtCore import Qt, Signal as pyqtSignal
+from PySide6.QtGui import QColor, QTextCharFormat, QFontDatabase, QAction
 import sys
 import os
-import json
-import shutil
 
 class SearchBar(QLineEdit):
     searchRequested = pyqtSignal(str)
