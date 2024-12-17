@@ -1,4 +1,5 @@
-# Project 2151 - Notes App Lab version Alpha 0.1
+#Last Stable Version - 12/13/2024
+# Project 2151 - Notes App Lab - Version Alpha 0.1
 # eri r jorge & Zion 
 # 12/02/2024 - created file and imported Pyside6.QtWidgets
 # 12/02/2024 - created class CustomListWidget

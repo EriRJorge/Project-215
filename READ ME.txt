@@ -1,3 +1,29 @@
+#Set up#
+1. install PySide6
+2. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Instructions for Lab#
 Lab Assignment: Building a Notes App
 Replacing Lab B (Tic-Tac-Toe)
 
