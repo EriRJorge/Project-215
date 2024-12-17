@@ -79,23 +79,33 @@ class NoteEditor(QTextEdit):
     def change_font(self, font_family):
         cursor = self.textCursor()
         if cursor.hasSelection():
-            format = QTextCharFormat()
-            format.setFontFamily(font_family)
-            cursor.mergeCharFormat(format)
+            # Apply new font family to selected text only
+            fmt = QTextCharFormat()
+            fmt.setFontFamily(font_family)
+            cursor.mergeCharFormat(fmt)
 
     def change_font_size(self, size):
         cursor = self.textCursor()
         if cursor.hasSelection():
-            format = QTextCharFormat()
-            format.setFontPointSize(size)
-            cursor.mergeCharFormat(format)
+            # Apply new font size to selected text only
+            fmt = QTextCharFormat()
+            fmt.setFontPointSize(size)
+            cursor.mergeCharFormat(fmt)
 
     def change_font_color(self, color):
         cursor = self.textCursor()
         if cursor.hasSelection():
-            format = QTextCharFormat()
-            format.setForeground(QColor(color))
-            cursor.mergeCharFormat(format)
+            # Apply new font color to selected text only
+            fmt = QTextCharFormat()
+            fmt.setForeground(QColor(color))
+            cursor.mergeCharFormat(fmt)
+    
+    def clear_formatting(self):
+        cursor = self.textCursor()
+        if cursor.hasSelection():
+            # Reset formatting for the selected text
+            fmt = QTextCharFormat()
+            cursor.mergeCharFormat(fmt)
 
     def change_background_color(self, color):
         self.setStyleSheet(f"""
@@ -113,13 +123,13 @@ class NoteEditor(QTextEdit):
             current_block = cursor.block().text()
 
             if current_block.strip().startswith('• '):
-                # If the current line is just a bullet point, remove it
+                # if there is only a bullet point, remove it
                 if current_block.strip() == '• ':
                     cursor.movePosition(QTextCursor.StartOfBlock, QTextCursor.KeepAnchor)
                     cursor.removeSelectedText()
                     self.setTextCursor(cursor)
                 else:
-                    # Insert a new line and a bullet point
+                    # insert a new bullet point
                     super().keyPressEvent(event)
                     cursor = self.textCursor()
                     cursor.insertText("• ")
@@ -294,18 +304,22 @@ class NotesApp(QMainWindow):
 
     def save_note(self):
         if not self.note_editor.toPlainText().strip():
-            QMessageBox.warning(self, "Error", "Cannot save empty note")
+            QMessageBox.warning(self, "Error", "Cannot save an empty note")
             return
-            
+
         if not self.current_file:
             title, ok = QInputDialog.getText(self, "Save Note", "Enter note title:")
             if ok and title:
-                self.current_file = os.path.join("notes", f"{title}.txt")
-        
+                self.current_file = os.path.join("notes", f"{title}.json")
+    
         if self.current_file:
             try:
+                # Save both text and formatting
+                note_data = {
+                    "content": self.note_editor.toHtml()
+                }
                 with open(self.current_file, 'w') as file:
-                    file.write(self.note_editor.toPlainText())
+                    json.dump(note_data, file)
                 self.statusBar().showMessage(f"Saved to {self.current_file}")
                 self.update_notes_list()
             except Exception as e:
@@ -329,19 +343,23 @@ class NotesApp(QMainWindow):
                 QMessageBox.warning(self, "Error", f"Failed to delete note: {str(e)}")
 
     def note_selected(self, item):
-        file_path = os.path.join("notes", f"{item.text()}.txt")
+        file_path = os.path.join("notes", f"{item.text()}.json")  # Use .json extension
         if os.path.exists(file_path):
             with open(file_path, 'r') as file:
-                self.note_editor.setPlainText(file.read())
+                note_data = json.load(file)
+                self.note_editor.setHtml(note_data.get("content", ""))
             self.current_file = file_path
             self.statusBar().showMessage(f"Loaded {file_path}")
+
 
     def update_notes_list(self):
         self.notes_list.clear()
         if os.path.exists("notes"):
             for filename in os.listdir("notes"):
-                if filename.endswith(".txt"):
-                    self.notes_list.addItem(filename[:-4])
+                # Look for .json files instead of .txt
+                if filename.endswith(".json"):
+                    self.notes_list.addItem(filename[:-5])  # Strip ".json" extension
+
 
     def search_notes(self, text):
         for i in range(self.notes_list.count()):
